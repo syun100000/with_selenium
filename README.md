@@ -1,0 +1,2 @@
+# with_selenium
+withをSeleniumを用いて自動取得及び自動送信をするためコード
