@@ -64,7 +64,6 @@ class Crawler:
         self.driver.get(self.url)
         self.started = True
         self.driver.implicitly_wait(5)  # ページの読み込みを待つ
-        time.sleep(5)  # ページが完全に読み込まれるまで待機
         # 例: ログイン処理
         self.load_cookies() # クッキーを読み込む
     def login(self):
@@ -115,7 +114,7 @@ class Crawler:
             # 一番最初のaタグをクリック
             user.find_element(By.TAG_NAME, 'a').click()
             # ページが読み込まれるまで待機
-            time.sleep(5)
+            time.sleep(2)
             user_name = self.driver.find_element(By.CLASS_NAME,'profile_main-nickname').text
             user_age_address = self.driver.find_element(By.CLASS_NAME, 'profile_main-age-address').text
             # 年齢と住所を分解して変数に保存
@@ -138,13 +137,19 @@ class Crawler:
             # AIにメッセージを作成してもらう
             ollama_client = client.OllamaClient()
             initial_message = ollama_client.create_initial_message(user_name, user_profile)
-            print(f"AIが作成したメッセージ: {initial_message}")
-            input("メッセージを送信する準備ができました。Enterを押してください。")  
+            print(f"AIが作成したメッセージ")
+            print(initial_message)
             # メッセージを入力
             message_input = self.driver.find_element(By.ID,'message')
             message_input.send_keys(initial_message)
             # 送信ボタンをクリック
-            break
+            input("メッセージを送信するにはEnterを押してください。")
+            send_button = self.driver.find_element(By.NAME,'button')
+            # 送信ボタンを画面内にスクロール（必要なら）
+            self.driver.execute_script("arguments[0].scrollIntoView(true);", send_button)
+            # JavaScriptでクリック（範囲外や被り対策）
+            self.driver.execute_script("arguments[0].click();", send_button)
+            time.sleep(3)  # ページが完全に戻るまで待機
 #テスト
 if __name__ == "__main__":
     crawler = Crawler()

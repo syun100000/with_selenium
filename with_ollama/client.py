@@ -1,7 +1,7 @@
 from ollama import chat, ChatResponse
 import os
 from dotenv import load_dotenv
-
+import pyperclip
 # .envファイルを読み込む
 load_dotenv()
 
@@ -21,7 +21,7 @@ class OllamaClient:
         print(f"モデル: {self.model_name}")
 
     # 自分のプロフィールと相手のプロフィールを参照しはじめのメッセージを作成
-    def create_initial_message(self, partner_name,partner_profile):
+    def create_initial_message(self, partner_name=None,partner_profile=None):
         if self.my_profile == "":
             raise ValueError("自分のプロフィールが設定されていません")
         if partner_profile == "":
@@ -31,7 +31,8 @@ class OllamaClient:
         ai_prompt += f"相手のプロフィールは{partner_profile}です。"
         ai_prompt += "あなたはマッチングアプリで、相手に最初のメッセージを送るAIです。"
         ai_prompt += "このプロフィールをもとに、最初に相手が反応しやすいメッセージを作成してください。"
-        ai_prompt += "相手のことはあなたではなくお名前で呼んでください。"
+        ai_prompt += "相手のことはあなたではなくお名前でさん付けで呼んでください。"
+        ai_prompt += "相手の名前は正しく呼んでください。"
         ai_prompt += "相手のプロフィールをよく理解して、自分と共通点がありそうであればそれを強調しなくても相手の興味を引くようなメッセージを作成してください。"
         ai_prompt += "文字数は150字以内でお願いします。"
         # モデルにプロンプトを送信
@@ -50,28 +51,35 @@ class OllamaClient:
             if res_len < 200:
                 break
             else:
-                ai_prompt += "文字数は200字以内でお願いします。"
+                ai_prompt += "文字数は150字以内でお願いします。"
         return remove_non_bmp(response.message.content)
 
 # DEBUG
 if __name__ == "__main__":
     # OllamaClientのインスタンスを作成
     ollama_client = OllamaClient()
-    partner_name = "なな"
-    partner_profile = (
-        "はじめまして、こんにちは。\n"
-        "東京出身のななといいます🧸\n\n"
-        "好きなことは食べることと寝ること🐑とゲームで\n"
-        "休みの日は美味しいものを探したり、お昼寝したりゲームしていることが多いです。\n\n"
-        "周りには大人っぽいと言って貰えることが事多いですが、\n"
-        "私自身はほんとかな？と感じています\n\n"
-        "恋愛では、信頼の中で相手に委ねて、安心して甘えられるような関係が理想です。\n"
-        "主導権を持って引っ張ってくれる相手に安心します！\n\n"
-        "表面的な優しさより、ちゃんと見て、理解して大事にしてくれる人とゆっくり深く関係を育てられたら嬉しいです。\n\n"
-        "興味もっていただけたらメッセください！\n"
-    )
-    # 最初のメッセージを作成
+
+    # ユーザーから名前とプロフィールを手動入力
+    partner_name = input("相手の名前を入力してください: ")
+    # 改行2回で入力完了するように相手のプロフィールを入力
+    print("相手のプロフィールを入力してください（改行2回で入力完了）:")
+    partner_profile_lines = []
+    while True:
+        line = input()
+        if line == "":
+            break
+        partner_profile_lines.append(line)
+    partner_profile = "\n".join(partner_profile_lines)
+
+    # AIでメッセージを生成
     initial_message = ollama_client.create_initial_message(partner_name, partner_profile)
     
     # 作成したメッセージを表示
     print("最初のメッセージ:", initial_message)
+
+    # 自動でクリップボードにコピー
+    try:
+        pyperclip.copy(initial_message)
+        print("メッセージをクリップボードにコピーしました。")
+    except ImportError:
+        print("pyperclipがインストールされていないため、クリップボードへのコピーは行いませんでした。")
