@@ -6,6 +6,13 @@
     "configurations": [
     
         {
+            "name": "Python デバッガー: main",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal"
+        }
+        {
             "name": "Python デバッガー: 現在のファイル",
             "type": "debugpy",
             "request": "launch",

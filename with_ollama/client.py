@@ -5,10 +5,9 @@ from dotenv import load_dotenv
 # .envファイルを読み込む
 load_dotenv()
 
-# ベースプロンプト
-bese_prompt = ""
-
-
+def remove_non_bmp(text):
+    # BMP外の文字を除去する（U+10000以上の文字を除外）
+    return ''.join(c for c in text if ord(c) <= 0xFFFF)
 class OllamaClient:
     def __init__(self):
         # .envからモデル名とURLを取得
@@ -32,16 +31,27 @@ class OllamaClient:
         ai_prompt += f"相手のプロフィールは{partner_profile}です。"
         ai_prompt += "あなたはマッチングアプリで、相手に最初のメッセージを送るAIです。"
         ai_prompt += "このプロフィールをもとに、最初に相手が反応しやすいメッセージを作成してください。"
+        ai_prompt += "相手のことはあなたではなくお名前で呼んでください。"
         ai_prompt += "相手のプロフィールをよく理解して、自分と共通点がありそうであればそれを強調しなくても相手の興味を引くようなメッセージを作成してください。"
-        ai_prompt += "文字数は300字以内でお願いします。"
+        ai_prompt += "文字数は150字以内でお願いします。"
         # モデルにプロンプトを送信
-        response: ChatResponse = chat(model=self.model_name, messages=[
-            {
-                'role': 'user',
-                'content': ai_prompt,
-            },
-        ])
-        return response.message.content
+        count = 0
+        while True:
+            response: ChatResponse = chat(model=self.model_name, messages=[
+                {
+                    'role': 'user',
+                    'content': ai_prompt,
+                },
+            ])
+            res_len = len(response.message.content)
+            count += 1
+            if count > 10:
+                raise ValueError("AIの生成が3回連続で200字を超えました。")
+            if res_len < 200:
+                break
+            else:
+                ai_prompt += "文字数は200字以内でお願いします。"
+        return remove_non_bmp(response.message.content)
 
 # DEBUG
 if __name__ == "__main__":
